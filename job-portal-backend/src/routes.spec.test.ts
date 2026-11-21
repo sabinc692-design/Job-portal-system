@@ -61,6 +61,24 @@ test("POST /api/auth/logout succeeds", async () => {
   assert.equal(data.success, true);
 });
 
+test("CORS allows credentialed preflight requests from the configured client origin", async () => {
+  const origin = process.env.CLIENT_URL;
+  assert.ok(origin, "CLIENT_URL must be set for the CORS preflight test");
+
+  const res = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "OPTIONS",
+    headers: {
+      Origin: origin,
+      "Access-Control-Request-Method": "POST",
+      "Access-Control-Request-Headers": "authorization,content-type",
+    },
+  });
+
+  assert.equal(res.status, 204);
+  assert.equal(res.headers.get("access-control-allow-origin"), origin);
+  assert.equal(res.headers.get("access-control-allow-credentials"), "true");
+});
+
 test("Recruiter routes enforce authentication and role", async () => {
   // Unauthenticated
   const unauthRes = await fetch(`${baseUrl}/api/recruiter/job`);

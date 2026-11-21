@@ -43,6 +43,7 @@ import {
   getDashboardPath,
   type AuthRole,
 } from "@/lib/auth";
+import { apiRequest } from "@/lib/api";
 
 interface PublicJob {
   id: string;
@@ -129,14 +130,13 @@ export default function Home() {
   useEffect(() => {
     async function loadPublicJobs() {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://job-portal-system-6yb1.onrender.com/api";
-        const res = await fetch(`${API_URL}/jobs?limit=3&status=PUBLISHED`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.jobs && data.jobs.length > 0) {
-            setFeaturedJobs(data.jobs);
-            setTotalJobs(data.total ?? data.jobs.length);
-          }
+        const data = await apiRequest<{ jobs?: PublicJob[]; total?: number }>(
+          "/jobs?limit=3&status=PUBLISHED",
+          { method: "GET", requiresAuth: false }
+        );
+        if (data.jobs && data.jobs.length > 0) {
+          setFeaturedJobs(data.jobs);
+          setTotalJobs(data.total ?? data.jobs.length);
         }
       } catch {
         // silently fail — no jobs shown if API is down

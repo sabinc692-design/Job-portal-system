@@ -1,4 +1,15 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://job-portal-system-6yb1.onrender.com/api";
+const configuredApiUrl =
+  process.env.NEXT_PUBLIC_API_URL?.trim() ||
+  "https://job-portal-system-6yb1.onrender.com";
+const apiOrigin = configuredApiUrl.replace(/\/+$/, "").replace(/\/api$/i, "");
+
+export const API_BASE_URL = `${apiOrigin}/api`;
+
+function buildApiUrl(path: string) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const endpointPath = normalizedPath.replace(/^\/api(?=\/|[?#]|$)/i, "");
+  return `${API_BASE_URL}${endpointPath}`;
+}
 
 interface RequestOptions extends RequestInit {
   requiresAuth?: boolean;
@@ -11,8 +22,9 @@ export async function apiRequest<T>(
   const { requiresAuth = true, headers: customHeaders, ...rest } = options;
 
   const isFormData = typeof FormData !== "undefined" && rest.body instanceof FormData;
+  const hasBody = rest.body !== undefined && rest.body !== null;
   const headers: Record<string, string> = {
-    ...(!isFormData ? { "Content-Type": "application/json" } : {}),
+    ...(hasBody && !isFormData ? { "Content-Type": "application/json" } : {}),
     ...(customHeaders as Record<string, string>),
   };
 
@@ -23,7 +35,7 @@ export async function apiRequest<T>(
     }
   }
 
-  const url = `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  const url = buildApiUrl(path);
   let res = await fetch(url, {
     ...rest,
     headers,
@@ -34,7 +46,7 @@ export async function apiRequest<T>(
     const refreshToken = localStorage.getItem("refreshToken");
     if (refreshToken) {
       try {
-        const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+        const refreshRes = await fetch(buildApiUrl("/auth/refresh"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ refreshToken }),
