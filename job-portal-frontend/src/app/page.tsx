@@ -129,7 +129,7 @@ export default function Home() {
   useEffect(() => {
     async function loadPublicJobs() {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
+        const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://job-portal-system-6yb1.onrender.com/api";
         const res = await fetch(`${API_URL}/jobs?limit=3&status=PUBLISHED`);
         if (res.ok) {
           const data = await res.json();
